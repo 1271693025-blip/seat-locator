@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主舞台座位定位器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        #nameInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        #searchBtn {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #searchBtn:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            padding: 20px;
+            border-radius: 4px;
+            font-size: 18px;
+            text-align: center;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>主舞台座位定位器</h1>
+        <div class="search-box">
+            <input type="text" id="nameInput" placeholder="请输入要查找的姓名（如：周明根）">
+            <button id="searchBtn">查找座位</button>
+        </div>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // 构建座位数据（完全对应你的座位表）
+        const seatData = [
+            // 桌区1：左、中、右
+            {name: "陈健", area: "桌区1", row: 1, pos: "左"},
+            {name: "余铮", area: "桌区1", row: 1, pos: "中"},
+            {name: "唐瑾", area: "桌区1", row: 1, pos: "右"},
+            {name: "陈文忠", area: "桌区1", row: 2, pos: "左"},
+            {name: "李承民", area: "桌区1", row: 2, pos: "中"},
+            {name: "余会莲", area: "桌区1", row: 2, pos: "右"},
+            {name: "杨健", area: "桌区1", row: 3, pos: "左"},
+            {name: "李亚君", area: "桌区1", row: 3, pos: "中"},
+            {name: "董俊平", area: "桌区1", row: 3, pos: "右"},
+            {name: "张昊", area: "桌区1", row: 4, pos: "左"},
+            {name: "李伟", area: "桌区1", row: 4, pos: "中"},
+            {name: "何金妹", area: "桌区1", row: 4, pos: "右"},
+            {name: "张秀和", area: "桌区1", row: 5, pos: "左"},
+            {name: "杨琳", area: "桌区1", row: 5, pos: "中"},
+            {name: "张雪芳", area: "桌区1", row: 5, pos: "右"},
+            {name: "赵华", area: "桌区1", row: 6, pos: "左"},
+            {name: "陈伟民", area: "桌区1", row: 6, pos: "中"},
+            {name: "邱桂虹", area: "桌区1", row: 6, pos: "右"},
+            {name: "周志康", area: "桌区1", row: 7, pos: "左"},
+            {name: "马巧梅", area: "桌区1", row: 7, pos: "中"},
+            {name: "张其珍", area: "桌区1", row: 7, pos: "右"},
+            {name: "徐伟", area: "桌区1", row: 8, pos: "左"},
+            {name: "孙平", area: "桌区1", row: 8, pos: "中"},
+            {name: "毕和发", area: "桌区1", row: 8, pos: "右"},
+            {name: "周明根", area: "桌区1", row: 9, pos: "左"},
+            {name: "黄莲蓉", area: "桌区1", row: 9, pos: "中"},
+            {name: "朱慧", area: "桌区1", row: 9, pos: "右"},
+            {name: "李骏", area: "桌区1", row: 10, pos: "左"},
+            {name: "顾杰", area: "桌区1", row: 10, pos: "中"},
+            {name: "任伟永", area: "桌区1", row: 10, pos: "右"},
+
+            // 桌区2：左、中、右
+            {name: "仲蛇扣", area: "桌区2", row: 1, pos: "左"},
+            {name: "左家荣", area: "桌区2", row: 1, pos: "中"},
+            {name: "赵玉梅", area: "桌区2", row: 1, pos: "右"},
+            {name: "刘传乐", area: "桌区2", row: 2, pos: "左"},
+            {name: "张瑛", area: "桌区2", row: 2, pos: "中"},
+            {name: "李芹朋", area: "桌区2", row: 2, pos: "右"},
+            {name: "谷金合", area: "桌区2", row: 3, pos: "左"},
+            {name: "王金旭", area: "桌区2", row: 3, pos: "中"},
+            {name: "陆玉华芳", area: "桌区2", row: 3, pos: "右"},
+            {name: "何云", area: "桌区2", row: 4, pos: "左"},
+            {name: "吴烨", area: "桌区2", row: 4, pos: "中"},
+            {name: "张明德", area: "桌区2", row: 4, pos: "右"},
+            {name: "严天勇", area: "桌区2", row: 5, pos: "左"},
+            {name: "沈秀珍", area: "桌区2", row: 5, pos: "中"},
+            {name: "张铁宝", area: "桌区2", row: 5, pos: "右"},
+            {name: "邹智生", area: "桌区2", row: 6, pos: "左"},
+            {name: "张庆华", area: "桌区2", row: 6, pos: "中"},
+            {name: "刘荣潮", area: "桌区2", row: 6, pos: "右"},
+            {name: "董家斌", area: "桌区2", row: 7, pos: "左"},
+            {name: "李姗姗", area: "桌区2", row: 7, pos: "中"},
+            {name: "薛阿焕", area: "桌区2", row: 7, pos: "右"},
+            {name: "徐海荣", area: "桌区2", row: 8, pos: "左"},
+            {name: "姜天安", area: "桌区2", row: 8, pos: "中"},
+            {name: "蔡明皓", area: "桌区2", row: 8, pos: "右"},
+            {name: "王秀云", area: "桌区2", row: 9, pos: "左"},
+            {name: "黄作玉", area: "桌区2", row: 9, pos: "中"},
+            {name: "徐美珍", area: "桌区2", row: 9, pos: "右"},
+            {name: "宋成", area: "桌区2", row: 10, pos: "左"},
+            {name: "许俊强", area: "桌区2", row: 10, pos: "中"},
+            {name: "俞琪蓁", area: "桌区2", row: 10, pos: "右"},
+
+            // 桌区3：左、中、右
+            {name: "司仲毅", area: "桌区3", row: 1, pos: "左"},
+            {name: "张欣琳", area: "桌区3", row: 1, pos: "中"},
+            {name: "户会刚", area: "桌区3", row: 1, pos: "右"},
+            {name: "刘美", area: "桌区3", row: 2, pos: "左"},
+            {name: "姜燕", area: "桌区3", row: 2, pos: "中"},
+            {name: "陈姣姣", area: "桌区3", row: 2, pos: "右"},
+            {name: "王贞", area: "桌区3", row: 3, pos: "左"},
+            {name: "陆华", area: "桌区3", row: 3, pos: "中"},
+            {name: "王蓉", area: "桌区3", row: 3, pos: "右"},
+            {name: "兰婷婷", area: "桌区3", row: 4, pos: "左"},
+            {name: "韩创", area: "桌区3", row: 4, pos: "中"},
+            {name: "韩创朋友", area: "桌区3", row: 4, pos: "右"},
+            {name: "张桂荣", area: "桌区3", row: 5, pos: "左"},
+            {name: "曾嵘", area: "桌区3", row: 5, pos: "中"},
+            {name: "胡德敏", area: "桌区3", row: 5, pos: "右"},
+            {name: "黄蕾棉", area: "桌区3", row: 6, pos: "左"},
+            {name: "金静媛", area: "桌区3", row: 6, pos: "中"},
+            {name: "张洪根", area: "桌区3", row: 6, pos: "右"},
+            {name: "陆文", area: "桌区3", row: 7, pos: "左"},
+            {name: "兰祥生", area: "桌区3", row: 7, pos: "中"},
+            {name: "陈汝明", area: "桌区3", row: 7, pos: "右"},
+            {name: "葛玲娣", area: "桌区3", row: 8, pos: "左"},
+            {name: "关磊", area: "桌区3", row: 8, pos: "中"},
+            {name: "邓悦", area: "桌区3", row: 8, pos: "右"},
+            {name: "谢金香", area: "桌区3", row: 9, pos: "左"},
+            {name: "陈敏智", area: "桌区3", row: 9, pos: "中"},
+            {name: "邱奂英", area: "桌区3", row: 9, pos: "右"},
+            {name: "艾燮兴", area: "桌区3", row: 10, pos: "左"},
+            {name: "胡述琴", area: "桌区3", row: 10, pos: "中"},
+            {name: "刘阳", area: "桌区3", row: 10, pos: "右"},
+
+            // 桌区4：左、中、右
+            {name: "李丽松", area: "桌区4", row: 1, pos: "左"},
+            {name: "嘉宾", area: "桌区4", row: 1, pos: "中"},
+            {name: "嘉宾", area: "桌区4", row: 1, pos: "右"},
+            {name: "李总", area: "桌区4", row: 2, pos: "左"},
+            {name: "侯总", area: "桌区4", row: 2, pos: "中"},
+            {name: "蔡啸", area: "桌区4", row: 2, pos: "右"},
+            {name: "岑炯", area: "桌区4", row: 3, pos: "左"},
+            {name: "徐祖宏", area: "桌区4", row: 3, pos: "中"},
+            {name: "施天英", area: "桌区4", row: 3, pos: "右"},
+            {name: "施辉", area: "桌区4", row: 4, pos: "左"},
+            {name: "马军", area: "桌区4", row: 4, pos: "中"},
+            {name: "蒲忠思", area: "桌区4", row: 4, pos: "右"},
+            {name: "赵斌权", area: "桌区4", row: 5, pos: "左"},
+            {name: "刘金贵", area: "桌区4", row: 5, pos: "中"},
+            {name: "刘金贵爱人", area: "桌区4", row: 5, pos: "右"},
+            {name: "李玉玲", area: "桌区4", row: 6, pos: "左"},
+            {name: "蔡瑜", area: "桌区4", row: 6, pos: "中"},
+            {name: "胥球", area: "桌区4", row: 6, pos: "右"},
+            {name: "田兴隆", area: "桌区4", row: 7, pos: "左"},
+            {name: "徐依蔓", area: "桌区4", row: 7, pos: "中"},
+            {name: "李海毅", area: "桌区4", row: 7, pos: "右"},
+            {name: "黄忠定", area: "桌区4", row: 8, pos: "左"},
+            {name: "朱其仑", area: "桌区4", row: 8, pos: "中"},
+            {name: "廖莉莉", area: "桌区4", row: 8, pos: "右"},
+            {name: "张存娣", area: "桌区4", row: 9, pos: "左"},
+            {name: "周健", area: "桌区4", row: 9, pos: "中"},
+            {name: "孙春华", area: "桌区4", row: 9, pos: "右"},
+            {name: "赵致中", area: "桌区4", row: 10, pos: "左"},
+            {name: "陈嘉伟", area: "桌区4", row: 10, pos: "中"},
+            {name: "黄佳明", area: "桌区4", row: 10, pos: "右"},
+
+            // 桌区5：左、中、右
+            {name: "嘉宾", area: "桌区5", row: 1, pos: "左"},
+            {name: "嘉宾", area: "桌区5", row: 1, pos: "中"},
+            {name: "嘉宾", area: "桌区5", row: 1, pos: "右"},
+            {name: "麻孝东", area: "桌区5", row: 2, pos: "左"},
+            {name: "何杰", area: "桌区5", row: 2, pos: "中"},
+            {name: "柯杰", area: "桌区5", row: 2, pos: "右"},
+            {name: "涂沂贤", area: "桌区5", row: 3, pos: "左"},
+            {name: "陈晓燕", area: "桌区5", row: 3, pos: "中"},
+            {name: "潘月娣", area: "桌区5", row: 3, pos: "右"},
+            {name: "陈连娟", area: "桌区5", row: 4, pos: "左"},
+            {name: "唐培根", area: "桌区5", row: 4, pos: "中"},
+            {name: "龚裕生", area: "桌区5", row: 4, pos: "右"},
+            {name: "张桦", area: "桌区5", row: 5, pos: "左"},
+            {name: "施锋", area: "桌区5", row: 5, pos: "中"},
+            {name: "邬羿", area: "桌区5", row: 5, pos: "右"},
+            {name: "黄静娣", area: "桌区5", row: 6, pos: "左"},
+            {name: "闻捷", area: "桌区5", row: 6, pos: "中"},
+            {name: "张荣华", area: "桌区5", row: 6, pos: "右"},
+            {name: "李海运", area: "桌区5", row: 7, pos: "左"},
+            {name: "程丽娟", area: "桌区5", row: 7, pos: "中"},
+            {name: "朱培培", area: "桌区5", row: 7, pos: "右"},
+            {name: "李德权", area: "桌区5", row: 8, pos: "左"},
+            {name: "陈林宝(岳)", area: "桌区5", row: 8, pos: "中"},
+            {name: "陈卫龙", area: "桌区5", row: 8, pos: "右"},
+            {name: "王梦如", area: "桌区5", row: 9, pos: "左"},
+            {name: "赵爱莉", area: "桌区5", row: 9, pos: "中"},
+            {name: "沈辉平", area: "桌区5", row: 9, pos: "右"},
+            {name: "张庆祺", area: "桌区5", row: 10, pos: "左"},
+            {name: "郑弘", area: "桌区5", row: 10, pos: "中"},
+            {name: "郑法昊", area: "桌区5", row: 10, pos: "右"},
+
+            // 桌区6：左、中、右
+            {name: "王树东", area: "桌区6", row: 1, pos: "左"},
+            {name: "陈林宝(应)", area: "桌区6", row: 1, pos: "中"},
+            {name: "陈立军", area: "桌区6", row: 1, pos: "右"},
+            {name: "应开林", area: "桌区6", row: 2, pos: "左"},
+            {name: "黄寅明", area: "桌区6", row: 2, pos: "中"},
+            {name: "陈萍", area: "桌区6", row: 2, pos: "右"},
+            {name: "王燕萍", area: "桌区6", row: 3, pos: "左"},
+            {name: "王钢", area: "桌区6", row: 3, pos: "中"},
+            {name: "罗静", area: "桌区6", row: 3, pos: "右"},
+            {name: "洪菊妹", area: "桌区6", row: 4, pos: "左"},
+            {name: "刘晋东", area: "桌区6", row: 4, pos: "中"},
+            {name: "丁梅", area: "桌区6", row: 4, pos: "右"},
+            {name: "刘乃榕", area: "桌区6", row: 5, pos: "左"},
+            {name: "蒋帆", area: "桌区6", row: 5, pos: "中"},
+            {name: "刘学庆", area: "桌区6", row: 5, pos: "右"},
+            {name: "竺理颖", area: "桌区6", row: 6, pos: "左"},
+            {name: "徐震文", area: "桌区6", row: 6, pos: "中"},
+            {name: "黄强", area: "桌区6", row: 6, pos: "右"},
+            {name: "杨建国", area: "桌区6", row: 7, pos: "左"},
+            {name: "方国明", area: "桌区6", row: 7, pos: "中"},
+            {name: "毛锦刚", area: "桌区6", row: 7, pos: "右"},
+            {name: "陈卫龙", area: "桌区6", row: 8, pos: "左"},
+            {name: "厉挺", area: "桌区6", row: 8, pos: "中"},
+            {name: "毕莉", area: "桌区6", row: 8, pos: "右"},
+            {name: "钱玉珍家人", area: "桌区6", row: 9, pos: "左"},
+            {name: "诸瑞华", area: "桌区6", row: 9, pos: "中"},
+            {name: "毕前", area: "桌区6", row: 9, pos: "右"},
+            {name: "蔡瑛", area: "桌区6", row: 10, pos: "左"},
+            {name: "王庆有", area: "桌区6", row: 10, pos: "中"},
+            {name: "杨青", area: "桌区6", row: 10, pos: "右"},
+        ];
+
+        // 获取DOM元素
+        const nameInput = document.getElementById('nameInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const result = document.getElementById('result');
+
+        // 搜索函数
+        function searchSeat() {
+            // 获取输入的姓名并去除首尾空格
+            const searchName = nameInput.value.trim();
+            
+            // 空输入校验
+            if (!searchName) {
+                result.className = 'result error';
+                result.textContent = '请输入要查找的姓名！';
+                return;
+            }
+
+            // 查找匹配的座位信息（忽略大小写）
+            const matchSeat = seatData.find(item => 
+                item.name.toLowerCase() === searchName.toLowerCase()
+            );
+
+            // 显示结果
+            if (matchSeat) {
+                result.className = 'result success';
+                result.textContent = `${matchSeat.area},${matchSeat.row}行，${matchSeat.pos}`;
+            } else {
+                result.className = 'result error';
+                result.textContent = `未找到姓名为「${searchName}」的座位信息，请检查姓名是否正确！`;
+            }
+        }
+
+        // 绑定点击事件
+        searchBtn.addEventListener('click', searchSeat);
+
+        // 绑定回车事件
+        nameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchSeat();
+            }
+        });
+    </script>
+</body>
+</html>
